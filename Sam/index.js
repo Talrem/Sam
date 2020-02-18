@@ -39,7 +39,7 @@ fs.readdir(cheminfile.commands,(err, files) => {
 client.on('ready', async () => {
 	console.log(`${client.user.username} est en ligne!\n`)
   console.log(`${client.user.username} est connectée sur ${client.guilds.size} serveurs!\n`);
-  client.user.setActivity("+>help", {type: "WATCHING"})
+  client.user.setActivity("Sam. help", {type: "WATCHING"})
 	.then(() => console.log('Activité mise en place avec succès\n'))
 	.catch(console.error)
 });
