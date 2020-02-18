@@ -54,10 +54,10 @@ client.on('guildMemberAdd', function(member){
 });
 
 client.on("message", async message =>{
-	if(message.author.client) return;
+	if(message.author.client.bot) return;
   if(message.guild === null) return;
   let mes = message.content.toUpperCase();
-	let prefixes = JSON.parse(fs.readFileSync("./prefixes.json", "utf8"));
+	let prefixes = JSON.parse(fs.readFileSync("./json/prefixes.json", "utf8"));
 	if(!prefixes[message.guild.id]){
 		prefixes[message.guild.id] = {
 			prefixes: botconfig.prefix
