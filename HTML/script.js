@@ -1,64 +1,103 @@
-//------------------------
-//https://discordapp.com/api/oauth2/authorize?client_id=679247199527239680&scope=bot&permissions=8
-// API Discord :    https://discordapp.com/api/
-// Channel :        /channels/498232800621887500
-
-// Create a request variable and assign a new XMLHttpRequest object to it.
-var requestDiscord = new XMLHttpRequest()
+// Create a request variable and assign a new XMLHttpRequest object to it
 var requestGithub = new XMLHttpRequest()
 
-var apiDiscord = 'https://discordapp.com/api/oauth2/authorize?client_id=679247199527239680&permissions=8&scope=bot'
-var apiDiscordLienChannel = '/channels/498232800621887500'
-
 var apiGithub = 'https://api.github.com'
-var apiGithubLiengit = '/repos/Talrem/Sam'
-var apiGithubLienDoc = '/README.md'
+var apiGithubLienGit = '/repos/Talrem/Sam'
+var infoDuGit
+var leDiv = function(){
+    return document.getElementById('source');
+}
 
 
 // Open a new connection, using the GET request on the URL endpoint
-requestDiscord.open('GET', apiDiscord, true)
-requestGithub.open('GET', apiGithub+apiGithubLiengit, true)
+requestGithub.open('GET', apiGithub+apiGithubLienGit, false)
 
+//Load des infos du git
 requestGithub.onload = function() {
-    var data = JSON.parse(this.response)
-    document.getElementById("source").innerHTML = JSON.stringify(data)
-    console.log(data.blobs_url)
+    let data = JSON.parse(this.response)
+    infoDuGit = data
 }
-
-requestDiscord.onload = function() {
-    var data = JSON.parse(this.response)
-}
-
-// Send request
-requestDiscord.send()
 requestGithub.send()
+
+function b64DecodeUnicode(str) {
+    // Going backwards: from bytestream, to percent-encoding, to original string.
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
+function GetSortOrder(prop) {
+    return function(b, a) {
+        if (a[prop] > b[prop]) {
+            return 1;
+        } else if (a[prop] < b[prop]) {
+            return -1;
+        }
+        return 0;
+    }
+}
 
 //euh... le blob
 var laFonctionDuBouton = function(){
     var apiGithub = 'https://api.github.com'
-    var apiGithubLiengit = '/repos/Talrem/Sam'
+    var apiGithubLienGit = '/repos/Talrem/Sam/branches/master'
 
     var resGithub
     var request = new XMLHttpRequest()
     var request2 = new XMLHttpRequest()
-    request.open('GET', apiGithub+apiGithubLiengit, false)
+    var sha
+    request.open('GET', apiGithub+apiGithubLienGit, false)
     request.onload = function() {
         resGithub = JSON.parse(this.response)
-        console.log(resGithub)
+        sha = resGithub.commit.sha
+        console.log("Sha : " + sha)
     }
     request2.onload = function() {
         resGithub = JSON.parse(this.response)
         console.log(resGithub)
+        var string = JSON.stringify(b64DecodeUnicode(resGithub.content))
+        document.getElementById("source").innerHTML = retirerLesRetourALaLigne(string)
     }
     request.send()
 
-    var leNomDuBlob = document.getElementById("blob")
-    var nomDuBlob = leNomDuBlob.value
-    var urlDunBlob = resGithub.blobs_url
-    var urlDeLeBlob = urlDunBlob.replace("{/sha}", "/master/"+nomDuBlob)
-    urlDeLeBlob = urlDeLeBlob.replace("/git/", "/")
-    console.log(urlDunBlob)
-    console.log(urlDeLeBlob)
+    var urlDesTrees = resGithub.trees_url
+    console.log("Trees : " + urlDesTrees)
+    var urlDeLeBlob = urlDesTrees.replace("{/sha}", "/" + sha)
     request2.open('GET', urlDeLeBlob, false)
     request2.send()
 }
+
+//Recuperation du tree
+var apiGithubLienGitMaster = '/repos/Talrem/Sam/branches/master'
+var tree_url = infoDuGit.trees_url
+
+var requestTreeMaster = new XMLHttpRequest()
+var jsonTreeMaster
+requestTreeMaster.open('GET', apiGithub+apiGithubLienGitMaster, false)
+requestTreeMaster.onload = function(){
+    let data = JSON.parse(this.response)
+    jsonTreeMaster = data
+    console.log(data)
+}
+requestTreeMaster.send()
+
+var shaTree = jsonTreeMaster.commit.sha
+var jsonTreeRacine
+requestTreeMaster.open('GET', tree_url.replace('{/sha}', '/'+shaTree), false)
+requestTreeMaster.onload = function(){
+    let data = JSON.parse(this.response)
+    jsonTreeRacine = data
+    console.log(data)
+}
+requestTreeMaster.send()
+
+jsonTreeRacine.tree.sort(GetSortOrder("type"))
+function truc(){
+    for (var i = 0; i < jsonTreeRacine.tree.length; i++) {
+        let tree = jsonTreeRacine.tree
+        let bouton = document.createElement('button')
+        bouton.setAttribute('value', tree[i].type + ' : ' + tree[i].path)
+        leDiv.appendChild(bouton)
+    }
+}
+truc()
